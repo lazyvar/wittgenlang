@@ -1,0 +1,71 @@
+body {
+  font-family: 'Source Serif Pro', monospace;
+  background: #F3EEE1;
+  color: rgba(0, 0, 0, 0.87);
+  margin: auto;
+  margin-top: 25px;
+  max-width: 8.5in;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+a {
+  color: #4663ae;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #1a3a8b;
+}
+
+nav a {
+  margin-right: 20px;
+}
+
+nav {
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin-bottom: 0;
+}
+
+h3 {
+  font-weight: 400;
+}
+
+pre {
+  font-family: revert;
+  background-color: rgb(248, 248, 248);
+  padding: 20px;
+  border-radius: 4px;
+}
+
+reserved {
+  color: #B68A0B;
+}
+
+string {
+  color: #669900;
+}
+
+type {
+  color: #2987B5;
+}
+
+method {
+  color: #6C71C4
+}
+
+number {
+  color: #990254
+}
+
+comment {
+  color: darkgray;
+}
+
+declaration {
+  color: lightseagreen;
+}
