@@ -95,9 +95,6 @@ for i in 1..10 {
   write ("Odd number: " & i)
 }
 
-! Ternary-like conditional expressions
-is-adult #Decision is age >= 18 ? yes : no
-
 ! Pattern matching in conditions
 shape #Shape is Circle(5)
 if shape is Circle(radius) {
