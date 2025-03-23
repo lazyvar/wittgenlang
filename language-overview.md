@@ -120,6 +120,7 @@ There must always a new line before the last statment of the function.
 Functions are called Kotlin style. Can be listed out or hash-style using colon.
 There must always be a space after the name of the function when calling it.
 Functions with no params can be called using `.`
+Functions implicitly return their last expression, but can use `produce` to exit early with a value.
 """
 
 add #Number by {
@@ -152,6 +153,32 @@ calculate-understanding #Text by {
 }
 
 calculate-understanding (power-level: 8999)
+
+! Using produce for early exit from a function
+safe-divide #Number by {
+  @numerator #Number
+  @denominator #Number
+  
+  if denominator is 0 {
+    produce 0  ! Exit early with default value
+  }
+  
+  numerator / denominator
+}
+
+validate-age #Result by {
+  @age #Number
+  
+  if age < 0 {
+    produce Error("Age cannot be negative")
+  }
+  
+  if age > 150 {
+    produce Error("Age is unrealistic")
+  }
+  
+  Success(age)
+}
 ```
 
 ### Math operations
@@ -160,7 +187,6 @@ calculate-understanding (power-level: 8999)
 !doc """
 Standard math operations include addition (+), subtraction (-), multiplication (*), division (/), 
 modulo (%), exponentiation (^), and integer division (//). 
-There are also shorthand operators for incrementing and decrementing.
 """
 
 number-a #Number is 5
@@ -233,37 +259,7 @@ x-coord #Number is coordinate [0]      ! 10.5
 
 ### Error handling
 
-```wittgenlang
-!doc """
-Error handling in Wittgenlang is done through the `try` and `catch` expressions.
-Functions can signal errors using the `signal` keyword.
-"""
-
-divide #Number by {
-  @numerator #Number
-  @denominator #Number
-  
-  if denominator is 0 {
-    signal "Division by zero"
-  }
-  
-  numerator / denominator
-}
-
-perform-division #Number by {
-  @a #Number
-  @b #Number
-  
-  try {
-    divide (a, b)
-  } catch error #Text {
-    write error
-    0  ! Default value in case of error
-  }
-}
-
-result #Number is perform-division (10, 0)  ! Prints "Division by zero" and returns 0
-```
+TODO
 
 ### Types
 
@@ -283,16 +279,16 @@ decision #Decision is yes             ! Boolean (yes/no)
 nothing #Nothing is nothing          ! Similar to null/nil/None
 
 ! Type aliases
-Age is Number                  ! Age is now an alias for Number
-CountryCode is Text            ! CountryCode is an alias for Text
+see #Age is #Number                  ! Age is now an alias for Number
+see #CountryCode is #Text            ! CountryCode is an alias for Text
 
 ! Union types
-Result is Number | Text        ! Can be either a Number or Text
+see #Result is #Number | #Text        ! Can be either a Number or Text
 maybe-value #Result is "error" ! Holds a Text now
 change maybe-value to 42       ! Now holds a Number
 
 ! Custom types with variants (sum types)
-Shape is variant {
+see #Shape is variant {
   Circle(radius #Number)
   Rectangle(width #Number, height #Number)
   Triangle(base #Number, height #Number)
@@ -317,23 +313,23 @@ types that improve code readability and maintainability.
 """
 
 ! Simple custom type definition
-#AccountId is #Text                 ! AccountId is just a specialized Text type
+see #AccountId is #Text                 ! AccountId is just a specialized Text type
 
 ! Record type definition
-#Person is #{
+see #Person is #{
   name #Text
   age #Number
   email #Text
 }
 
 ! Variant type definition (sum type)
-#Result is #{
+see #Result is #{
   Success(value #Any)
   Error(message #Text)
 }
 
 ! Parametric type definition
-#Pair(A, B) is #{
+see #Pair(A, B) is #{
   first #A
   second #B
 }
