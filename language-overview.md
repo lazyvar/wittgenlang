@@ -7,21 +7,21 @@
 ! This is a back-to-back single line comment
 
 !doc """
-This is a multiline comment.
-Write whatever you want here.
-It will only be interpreted by your brain.
+  This is a multiline comment.
+  Write whatever you want here.
+  It will only be interpreted by your brain.
 """
-````
+```
 
 ### Values: Constants & Variables
 
 ```wittgenlang
 !doc """
-Values are immutable by default. To allow a value to be changed, use the keyword `forNow`.
-To change a variable, use the keyword `change`.
-Types of the value are specified after the name using `#`.
-All values need types specified.
-Kebab case is the one true path.
+  Values are immutable by default. To allow a value to be changed, use the keyword `forNow`.
+  To change a variable, use the keyword `change`.
+  Types of the value are specified after the name using `#`.
+  All values need types specified.
+  Kebab case is the one true path.
 """
 one #Number is 1
 ten #Number is 10
@@ -37,9 +37,9 @@ we-live-like-this #Decision is yes
 
 ```wittgenlang
 !doc """
-`of` is the swtich statement.
-`if`, `for`, and `while`, you already know and love.
-`unless` is the opposite of `if`.
+  `of` is the swtich statement.
+  `if`, `for`, and `while`, you already know and love.
+  `unless` is the opposite of `if`.
 """
 ! Conditional statements with if
 temperature #Number is 22
@@ -108,16 +108,16 @@ if shape is Circle(radius) {
 
 ```wittgenlang
 !doc """
-Functions are declared using `by`.
-The return type is specified after the name using `#`.
-`#Bliss` is the better version of `void` or `unit` and is used to signify functions that return nothing.
-Parameters to the function are declared in the function body using the `@` keyword.
-There is always a new line after the parameter declarations unless there are no params.
-There must always a new line before the last statment of the function.
-Functions are called Kotlin style. Can be listed out or hash-style using colon.
-There must always be a space after the name of the function when calling it.
-Functions with no params can be called using `.`
-Functions implicitly return their last expression, but can use `produce` to exit early with a value.
+  Functions are declared using `by`.
+  The return type is specified after the name using `#`.
+  `#Bliss` is the better version of `void` or `unit` and is used to signify functions that return nothing.
+  Parameters to the function are declared in the function body using the `@` keyword.
+  There is always a new line after the parameter declarations unless there are no params.
+  There must always a new line before the last statment of the function.
+  Functions are called Kotlin style. Can be listed out or hash-style using colon.
+  There must always be a space after the name of the function when calling it.
+  Functions with no params can be called using `.`
+  Functions implicitly return their last expression, but can use `produce` to exit early with a value.
 """
 
 add #Number by {
@@ -138,7 +138,7 @@ log-happiness.
 
 calculate-understanding #Text by {
   !doc """
-    Calculates total understanding, based upon power level.
+  Calculates total understanding, based upon power level.
   """
   @power-level #Number
 
@@ -182,8 +182,8 @@ validate-age #Result by {
 
 ```wittgenlang
 !doc """
-Standard math operations include addition (+), subtraction (-), multiplication (*), division (/), 
-modulo (%), exponentiation (^), and integer division (//). 
+  Standard math operations include addition (+), subtraction (-), multiplication (*), division (/), 
+  modulo (%), exponentiation (^), and integer division (//). 
 """
 
 number-a #Number is 5
@@ -204,10 +204,10 @@ forNow counter #Number is 0
 
 ```wittgenlang
 !doc """
-Wittgenlang supports various data structures such as Lists, Maps, Records, and Tuples.
-Lists and Maps are mutable by default, while Records and Tuples are immutable.
-Type functions use a module-like syntax and must be imported to be used.
-The notation `value'function` is shorthand for `Type'function(value)`.
+  Wittgenlang supports various data structures such as Lists, Maps, Records, and Tuples.
+  Lists and Maps are mutable by default, while Records and Tuples are immutable.
+  Type functions use a module-like syntax and must be imported to be used.
+  The notation `value'function` is shorthand for `Type'function(value)`.
 """
 
 ! Lists
@@ -262,10 +262,10 @@ TODO
 
 ```wittgenlang
 !doc """
-Wittgenlang has several built-in types and supports custom type definitions.
-Type annotations are required for all variables and function returns.
-Only structs and modules are available for types, and their functions must
-be imported before use.
+  Wittgenlang has several built-in types and supports custom type definitions.
+  Type annotations are required for all variables and function returns.
+  Only structs and modules are available for types, and their functions must
+  be imported before use.
 """
 
 ! Built-in primitive types
@@ -304,9 +304,9 @@ if my-shape is Circle {
 
 ```wittgenlang
 !doc """
-Custom types are defined using the `#` prefix. The definition starts with the type name,
-followed by `is` and then the type definition. This allows for creating expressive, domain-specific
-types that improve code readability and maintainability.
+  Custom types are defined using the `#` prefix. The definition starts with the type name,
+  followed by `is` and then the type definition. This allows for creating expressive, domain-specific
+  types that improve code readability and maintainability.
 """
 
 ! Simple custom type definition
@@ -374,12 +374,12 @@ number-text-pair #Pair(Number, Text) is create-pair (42, "answer")
 
 ```wittgenlang
 !doc """
-Modules in Wittgenlang are inspired by Elixir. They provide namespaces for functions
-and can be nested. All code belongs to a module, and functions defined within a module
-can be called directly within that module.
+  Modules in Wittgenlang are inspired by Elixir. They provide namespaces for functions
+  and can be nested. All code belongs to a module, and functions defined within a module
+  can be called directly within that module.
 
-Types behave like modules for their functions. To access type functions, you must first
-import the type module. The syntax `value'function` is shorthand for `Type'function(value)`.
+  Types behave like modules for their functions. To access type functions, you must first
+  import the type module. The syntax `value'function` is shorthand for `Type'function(value)`.
 """
 
 ! Defining a module
@@ -459,9 +459,9 @@ result #Number is M'add (Rect'area(3, 4), 5)  ! 17
 
 ```wittgenlang
 !doc """
-Wittgenlang comes with a standard library that provides common functionality.
-These are some of the core modules and functions available.
-Type functions must be imported before use.
+  Wittgenlang comes with a standard library that provides common functionality.
+  These are some of the core modules and functions available.
+  Type functions must be imported before use.
 """
 
 ! Text operations

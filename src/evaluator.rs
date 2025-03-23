@@ -28,6 +28,15 @@ impl Environment {
     pub fn get(&self, name: &str) -> Option<Value> {
         self.values.get(name).cloned()
     }
+
+    pub fn assign(&mut self, name: &str, value: Value) -> Result<(), String> {
+        if self.values.contains_key(name) {
+            self.values.insert(name.to_string(), value);
+            Ok(())
+        } else {
+            Err(format!("Undefined variable '{}'.", name))
+        }
+    }
 }
 
 pub struct Interpreter {
@@ -52,28 +61,83 @@ impl Interpreter {
     fn execute(&mut self, stmt: Stmt) -> Result<Value, String> {
         match stmt {
             Stmt::Expression(expr) => self.evaluate(expr),
-            Stmt::Function { name, params: _, body: _ } => {
+            Stmt::Function { name, return_type: _, params: _, body: _ } => {
                 // Store a placeholder value for now
                 // In a full implementation, we would store the function definition
                 self.environment.define(name, Value::Nil);
                 Ok(Value::Nil)
             }
-            Stmt::Return(value) => {
+            Stmt::Value { name, type_name: _, initializer, mutable: _ } => {
+                let value = self.evaluate(initializer)?;
+                self.environment.define(name, value.clone());
+                Ok(value)
+            }
+            Stmt::Change { name, value } => {
+                let evaluated_value = self.evaluate(value)?;
+                self.environment.assign(&name, evaluated_value.clone())?;
+                Ok(evaluated_value)
+            }
+            Stmt::Produce(value) => {
                 if let Some(expr) = value {
                     self.evaluate(expr)
                 } else {
                     Ok(Value::Nil)
                 }
             }
-            Stmt::Var { name, initializer } => {
-                let value = if let Some(expr) = initializer {
-                    self.evaluate(expr)?
+            Stmt::If { condition, then_branch, else_branch } => {
+                let condition_value = self.evaluate(condition)?;
+                if self.is_truthy(condition_value) {
+                    let mut result = Value::Nil;
+                    for stmt in then_branch {
+                        result = self.execute(stmt)?;
+                    }
+                    Ok(result)
+                } else if let Some(else_stmts) = else_branch {
+                    let mut result = Value::Nil;
+                    for stmt in else_stmts {
+                        result = self.execute(stmt)?;
+                    }
+                    Ok(result)
                 } else {
-                    Value::Nil
-                };
-                self.environment.define(name, value.clone());
+                    Ok(Value::Nil)
+                }
+            }
+            Stmt::Unless { condition, body } => {
+                let condition_value = self.evaluate(condition)?;
+                if !self.is_truthy(condition_value) {
+                    let mut result = Value::Nil;
+                    for stmt in body {
+                        result = self.execute(stmt)?;
+                    }
+                    Ok(result)
+                } else {
+                    Ok(Value::Nil)
+                }
+            }
+            Stmt::While { condition, body } => {
+                let mut result = Value::Nil;
+                let condition = condition.clone();
+                let body = body.clone();
+                
+                // Evaluate condition first
+                let mut cond_result = self.evaluate(condition.clone())?;
+                
+                while self.is_truthy(cond_result) {
+                    for stmt in body.clone() {
+                        result = self.execute(stmt)?;
+                    }
+                    // Re-evaluate condition after each loop iteration
+                    cond_result = self.evaluate(condition.clone())?;
+                }
+                Ok(result)
+            }
+            Stmt::Write(expr) => {
+                let value = self.evaluate(expr)?;
+                println!("{:?}", value);
                 Ok(value)
             }
+            // Add placeholder implementations for other statement types
+            _ => Ok(Value::Nil),
         }
     }
 
@@ -87,7 +151,13 @@ impl Interpreter {
                     Token::Minus => self.binary_minus(left_value, right_value),
                     Token::Star => self.binary_multiply(left_value, right_value),
                     Token::Slash => self.binary_divide(left_value, right_value),
-                    Token::Equal => Ok(Value::Boolean(self.is_equal(left_value, right_value))),
+                    Token::Is => Ok(Value::Boolean(self.is_equal(left_value, right_value))),
+                    Token::EqualEqual => Ok(Value::Boolean(self.is_equal(left_value, right_value))),
+                    Token::NotEqual => Ok(Value::Boolean(!self.is_equal(left_value, right_value))),
+                    Token::Greater => self.compare_greater(left_value, right_value),
+                    Token::Less => self.compare_less(left_value, right_value),
+                    Token::GreaterEqual => self.compare_greater_equal(left_value, right_value),
+                    Token::LessEqual => self.compare_less_equal(left_value, right_value),
                     _ => Err("Invalid binary operator.".to_string()),
                 }
             }
@@ -97,7 +167,7 @@ impl Interpreter {
                 let right_value = self.evaluate(*right)?;
                 match operator {
                     Token::Minus => self.unary_minus(right_value),
-                    Token::Bang => Ok(Value::Boolean(!self.is_truthy(right_value))),
+                    Token::ExclamationMark => Ok(Value::Boolean(!self.is_truthy(right_value))),
                     _ => Err("Invalid unary operator.".to_string()),
                 }
             }
@@ -106,6 +176,23 @@ impl Interpreter {
                     .get(&name)
                     .ok_or_else(|| format!("Undefined variable '{}'.", name))
             }
+            Expr::FunctionCall { name, arguments, named_arguments: _ } => {
+                // Basic function call implementation - only handle built-in functions
+                if name == "print" || name == "write" {
+                    if let Some(arg) = arguments.get(0) {
+                        let arg = arg.clone();
+                        let value = self.evaluate(arg)?;
+                        println!("{:?}", value);
+                        Ok(value)
+                    } else {
+                        Ok(Value::Nil)
+                    }
+                } else {
+                    Err(format!("Function '{}' not implemented", name))
+                }
+            }
+            // Add placeholder implementations for other expression types
+            _ => Ok(Value::Nil),
         }
     }
 
@@ -144,6 +231,34 @@ impl Interpreter {
         }
     }
 
+    fn compare_greater(&self, left: Value, right: Value) -> Result<Value, String> {
+        match (left, right) {
+            (Value::Number(l), Value::Number(r)) => Ok(Value::Boolean(l > r)),
+            _ => Err("Operands must be numbers.".to_string()),
+        }
+    }
+
+    fn compare_less(&self, left: Value, right: Value) -> Result<Value, String> {
+        match (left, right) {
+            (Value::Number(l), Value::Number(r)) => Ok(Value::Boolean(l < r)),
+            _ => Err("Operands must be numbers.".to_string()),
+        }
+    }
+
+    fn compare_greater_equal(&self, left: Value, right: Value) -> Result<Value, String> {
+        match (left, right) {
+            (Value::Number(l), Value::Number(r)) => Ok(Value::Boolean(l >= r)),
+            _ => Err("Operands must be numbers.".to_string()),
+        }
+    }
+
+    fn compare_less_equal(&self, left: Value, right: Value) -> Result<Value, String> {
+        match (left, right) {
+            (Value::Number(l), Value::Number(r)) => Ok(Value::Boolean(l <= r)),
+            _ => Err("Operands must be numbers.".to_string()),
+        }
+    }
+
     fn unary_minus(&self, value: Value) -> Result<Value, String> {
         match value {
             Value::Number(n) => Ok(Value::Number(-n)),
@@ -154,9 +269,10 @@ impl Interpreter {
     fn literal_to_value(&self, literal: Literal) -> Value {
         match literal {
             Literal::Number(n) => Value::Number(n),
+            Literal::Integer(i) => Value::Number(i as f64),
             Literal::String(s) => Value::String(s),
-            Literal::Boolean(b) => Value::Boolean(b),
-            Literal::Nil => Value::Nil,
+            Literal::Decision(b) => Value::Boolean(b),
+            Literal::Nothing => Value::Nil,
         }
     }
 
