@@ -11,12 +11,12 @@ body {
 }
 
 a {
-  color: #4663ae;
+  color: chocolate;
   text-decoration: none;
 }
 
 a:hover {
-  color: #1a3a8b;
+  color: rgb(150, 70, 13);
 }
 
 nav a {
@@ -69,4 +69,8 @@ comment {
 
 declaration {
   color: lightseagreen;
+}
+
+atom {
+  color: #114697;
 }

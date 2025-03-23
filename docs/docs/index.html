@@ -37,7 +37,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Wittgenlang | A general purpose programming language</title>
+  <title>Wittgenlang | Docs</title>
   <link rel="stylesheet" href="/assets/normalize.css">
   <link rel="stylesheet" href="/assets/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,48 +52,21 @@
     <a href="/examples">Examples</a>
     <a href="/docs">Docs</a>
   </nav>
-  <h1>
-    Wittgenlang
-  </h1>
-  <h3>A general purpose programming language made for you.</h3>
-  <pre>
-
-secret <type>#number</type> (<number>1</number>..<number>10000</number>) '<method>random</method>
-
-play <type>#bliss</type> <reserved>-></reserved> {
-  guess-number <type>#number</type> (tries <type>#number)</type> <reserved>-></reserved> {
-    guess <type>#number</type> <method>read</method> <string>"Guess the number: "</string> '<method>numberify</method>
-
-    guess <reserved><=></reserved> number <reserved>~></reserved> {
-      <atom>.gt</atom> { 
-        <method>write</method> <string>"Too high."</string>
-        guess-again.</method>
-      }
-
-      <atom>.lt</atom> { 
-        <method>write</method> <string>"Too high."</string>
-        guess-again.</method>
-      }
-
-      <atom>.eq</atom> { 
-        <method>write</method> <string>"You got it dude."</string>
-        tries
-      }
-    }
-
-    guess-again <type>#number</type> <reserved>-></reserved> guess-number (tries <reserved>+</reserved> <number>1</number>)
-  }
-
-  tries <type>#number</type> guess-number (tries <number>0</number>)
-  <method>write</method> <string>"You won in</string> {tries} <string>tries"</string>
-}
-
-<method>play.</method>
-</pre>
-<pre>
-<reserved>fn</reserved> give <type>#t</type> (t <type>#t</type>) -> t
-</pre>
-
+  <h1>Docs</h1>
+  <ul>
+    <li>
+      Things
+      <ul>
+        <li>Number</li>
+        <li>Decision</li>
+        <li>Text</li>
+        <li><a href="things/atom/">Atom</a></li>
+        <li>List</li>
+        <li>Set</li>
+        <li>Hash</li>
+      </ul>
+    </li>
+  </ul>
 </body>
 
 </html>
