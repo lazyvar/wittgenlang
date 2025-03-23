@@ -389,7 +389,7 @@ import the type module. The syntax `value'function` is shorthand for `Type'funct
 module Math {
   ! Module constant
   pi #Number is 3.14159
-  
+
   ! Public function (exported by default)
   add #Number by {
     @x #Number
@@ -398,8 +398,8 @@ module Math {
     x + y
   }
   
-  ! Private function (prefixed with _)
-  _square #Number by {
+  ! Private function
+  square #Number by {
     @x #Number
     
     x * x
