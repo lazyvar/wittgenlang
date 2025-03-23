@@ -7,6 +7,11 @@ pub enum Value {
     Number(f64),
     String(String),
     Boolean(bool),
+    Function {
+        name: String,
+        params: Vec<(String, String)>,
+        body: Vec<Stmt>,
+    },
     Nil,
 }
 
@@ -61,10 +66,14 @@ impl Interpreter {
     fn execute(&mut self, stmt: Stmt) -> Result<Value, String> {
         match stmt {
             Stmt::Expression(expr) => self.evaluate(expr),
-            Stmt::Function { name, return_type: _, params: _, body: _ } => {
-                // Store a placeholder value for now
-                // In a full implementation, we would store the function definition
-                self.environment.define(name, Value::Nil);
+            Stmt::Function { name, return_type: _, params, body } => {
+                // Store the function definition
+                let function_value = Value::Function {
+                    name: name.clone(),
+                    params,
+                    body,
+                };
+                self.environment.define(name, function_value);
                 Ok(Value::Nil)
             }
             Stmt::Value { name, type_name: _, initializer, mutable: _ } => {
@@ -133,8 +142,12 @@ impl Interpreter {
             }
             Stmt::Write(expr) => {
                 let value = self.evaluate(expr)?;
-                println!("{:?}", value);
-                Ok(value)
+                let display_value = match &value {
+                    Value::String(s) => s.clone(),
+                    _ => format!("{:?}", value)
+                };
+                println!("{}", display_value);
+                Ok(Value::Nil)
             }
             // Add placeholder implementations for other statement types
             _ => Ok(Value::Nil),
@@ -177,18 +190,54 @@ impl Interpreter {
                     .ok_or_else(|| format!("Undefined variable '{}'.", name))
             }
             Expr::FunctionCall { name, arguments, named_arguments: _ } => {
-                // Basic function call implementation - only handle built-in functions
+                // Handle built-in functions
                 if name == "print" || name == "write" {
                     if let Some(arg) = arguments.get(0) {
                         let arg = arg.clone();
                         let value = self.evaluate(arg)?;
-                        println!("{:?}", value);
-                        Ok(value)
+                        let display_value = match &value {
+                            Value::String(s) => s.clone(),
+                            _ => format!("{:?}", value)
+                        };
+                        println!("{}", display_value);
+                        // Return Nil for write/print (Bliss type)
+                        Ok(Value::Nil)
                     } else {
                         Ok(Value::Nil)
                     }
                 } else {
-                    Err(format!("Function '{}' not implemented", name))
+                    // Look up the function in the environment
+                    match self.environment.get(&name) {
+                        Some(Value::Function { name: _, params, body }) => {
+                            // Create a new environment for the function call
+                            let mut function_env = Environment::new();
+                            
+                            // Evaluate arguments and bind them to parameters
+                            for (i, (param_name, _)) in params.iter().enumerate() {
+                                if let Some(arg) = arguments.get(i) {
+                                    let arg_value = self.evaluate(arg.clone())?;
+                                    function_env.define(param_name.clone(), arg_value);
+                                } else {
+                                    return Err(format!("Missing argument for parameter '{}'", param_name));
+                                }
+                            }
+                            
+                            // Save the current environment
+                            let previous_env = std::mem::replace(&mut self.environment, function_env);
+                            
+                            // Execute the function body
+                            let mut result = Value::Nil;
+                            for stmt in body.clone() {
+                                result = self.execute(stmt)?;
+                            }
+                            
+                            // Restore the previous environment
+                            self.environment = previous_env;
+                            
+                            Ok(result)
+                        },
+                        _ => Err(format!("Function '{}' not implemented", name))
+                    }
                 }
             }
             // Add placeholder implementations for other expression types

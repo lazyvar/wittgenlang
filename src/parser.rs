@@ -185,8 +185,92 @@ impl Parser {
             return self.write_statement();
         }
         if let Token::Identifier(_) = self.peek() {
-            // Look ahead to check if this is a value declaration with "is"
+            // Look ahead to check if this is a function declaration with "by"
             let next_pos = self.current + 1;
+            let next_next_pos = self.current + 2;
+            
+            if next_pos < self.tokens.len() && next_next_pos < self.tokens.len() &&
+               (matches!(self.tokens[next_pos], Token::TypePrefix | Token::NumberType | 
+                         Token::TextType | Token::DecisionType | Token::NothingType |
+                         Token::BlissType | Token::AnyType)) &&
+               matches!(self.tokens[next_next_pos], Token::By) {
+                // This is a function declaration: identifier type by { ... }
+                let function_name = if let Token::Identifier(name) = self.peek() {
+                    self.advance();
+                    name
+                } else {
+                    return Err("Expected function name".to_string());
+                };
+                
+                let return_type_token = self.advance(); // Consume the type token
+                
+                let return_type = if let Token::TypePrefix = return_type_token {
+                    if let Token::Identifier(type_name) = self.peek() {
+                        self.advance();
+                        type_name
+                    } else {
+                        return Err("Expected return type after '#'".to_string());
+                    }
+                } else {
+                    format!("{:?}", return_type_token)
+                };
+                
+                self.advance(); // Consume the "by" token
+                
+                self.consume(&Token::LeftBrace, "Expected '{' after 'by'")?;
+                
+                // Parse parameters (starting with @)
+                let mut params = Vec::new();
+                while self.match_token(&Token::ExclamationMark) {
+                    // Skip comments inside function body
+                    self.skip_comment_line();
+                    continue;
+                }
+                
+                while self.match_token(&Token::Ampersand) {
+                    let param_name = if let Token::Identifier(name) = self.peek() {
+                        self.advance();
+                        name
+                    } else {
+                        return Err("Expected parameter name after '&'".to_string());
+                    };
+                    
+                    let param_type = if self.match_token(&Token::TypePrefix) {
+                        if let Token::Identifier(type_name) = self.peek() {
+                            self.advance();
+                            type_name
+                        } else {
+                            return Err("Expected parameter type after '#'".to_string());
+                        }
+                    } else if self.match_any(&[
+                        Token::NumberType, Token::TextType, Token::DecisionType, 
+                        Token::NothingType, Token::BlissType, Token::AnyType
+                    ]) {
+                        format!("{:?}", self.previous())
+                    } else {
+                        return Err("Expected parameter type".to_string());
+                    };
+                    
+                    params.push((param_name, param_type));
+                }
+                
+                // Parse function body
+                let mut body = Vec::new();
+                while !self.check(&Token::RightBrace) && !self.is_at_end() {
+                    body.push(self.declaration()?);
+                }
+                
+                self.consume(&Token::RightBrace, "Expected '}' after function body")?;
+                
+                return Ok(Stmt::Function {
+                    name: function_name,
+                    return_type,
+                    params,
+                    body,
+                });
+            }
+            
+            // Check if this is a value declaration with "is"
             if next_pos < self.tokens.len() && 
                (matches!(self.tokens[next_pos], Token::TypePrefix | Token::NumberType | 
                          Token::TextType | Token::DecisionType | Token::NothingType |
@@ -639,16 +723,26 @@ impl Parser {
                     index: Box::new(index),
                 };
             } else if self.match_token(&Token::Dot) {
-                // Method call with no arguments: object.method
-                if let Token::Identifier(method) = self.peek() {
-                    self.advance();
+                // No-argument function call: name.
+                if let Expr::Variable(name) = expr {
+                    // Don't consume any more tokens - this is a no-args function call
                     expr = Expr::FunctionCall {
-                        name: method,
-                        arguments: vec![expr],
+                        name,
+                        arguments: Vec::new(),
                         named_arguments: Vec::new(),
                     };
                 } else {
-                    return Err("Expected method name after dot".to_string());
+                    // Method call with no arguments: object.method
+                    if let Token::Identifier(method) = self.peek() {
+                        self.advance();
+                        expr = Expr::FunctionCall {
+                            name: method,
+                            arguments: vec![expr],
+                            named_arguments: Vec::new(),
+                        };
+                    } else {
+                        return Err("Expected method name after dot".to_string());
+                    }
                 }
             } else {
                 break;
@@ -820,11 +914,15 @@ impl Parser {
     }
 
     fn is_at_end(&self) -> bool {
-        matches!(self.peek(), Token::EOF)
+        self.current >= self.tokens.len() || matches!(self.tokens.get(self.current), Some(Token::EOF) | None)
     }
 
     fn peek(&self) -> Token {
-        self.tokens[self.current].clone()
+        if self.current >= self.tokens.len() {
+            Token::EOF
+        } else {
+            self.tokens[self.current].clone()
+        }
     }
 
     fn previous(&self) -> Token {
@@ -860,31 +958,19 @@ impl Parser {
     }
 
     fn function_declaration(&mut self) -> Result<Stmt, String> {
-        // In Wittgenlang, functions are declared with:
-        // function-name #ReturnType by { @param1 #Type1 ... body }
+        // This method is called when we encounter a bare 'by' token.
+        // In our updated grammar, we should handle functions through the new pattern
+        // in the declaration method, so this is just a fallback.
         
-        // Get the function name and return type
+        // Get the function name. It should have been consumed before the 'by' token.
         let name = if let Token::Identifier(name) = self.previous_token() {
             name
         } else {
             return Err("Expected function name before 'by'".to_string());
         };
         
-        let return_type = if self.match_token(&Token::TypePrefix) {
-            if let Token::Identifier(type_name) = self.peek() {
-                self.advance();
-                type_name
-            } else {
-                return Err("Expected return type after '#'".to_string());
-            }
-        } else if self.match_any(&[
-            Token::NumberType, Token::TextType, Token::DecisionType, 
-            Token::NothingType, Token::BlissType, Token::AnyType
-        ]) {
-            format!("{:?}", self.previous())
-        } else {
-            return Err("Expected return type before 'by'".to_string());
-        };
+        // The return type should have already been parsed
+        let return_type = "Any".to_string(); // Default to Any
         
         self.consume(&Token::LeftBrace, "Expected '{' after 'by'")?;
         
@@ -909,7 +995,7 @@ impl Parser {
                     self.advance();
                     type_name
                 } else {
-                    return Err("Expected parameter type after '#'".to_string());
+                    return Err("Expected field type after '#'".to_string());
                 }
             } else if self.match_any(&[
                 Token::NumberType, Token::TextType, Token::DecisionType, 
